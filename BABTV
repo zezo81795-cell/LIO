@@ -1,1 +1,287 @@
-http://kanwat1.xyz:8080/get.php?username=lion123123&password=747645&type=m3u_plus&output=mpegts
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP IPTV - قنوات BABTV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #FFD700;
+            --secondary-color: #1E3A8A;
+            --bg-color: #0F172A;
+            --text-color: #FFF;
+            --card-bg: #1E293B;
+            --card-border: #FFD700;
+            --shadow-color: rgba(255, 215, 0, 0.2);
+            --hover-bg: #334155;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Readex Pro', sans-serif;
+            min-height: 100vh;
+        }
+        .category-header {
+            width: 100%;
+            background: linear-gradient(135deg, #1E3A8A, #0F172A);
+            padding: 20px 25px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            border-right: 8px solid var(--primary-color);
+            border-radius: 15px 0 0 15px;
+        }
+        .category-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .category-header .count {
+            background: var(--primary-color);
+            color: #0F172A;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 16px;
+        }
+        #page {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            #page { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        }
+        @media (max-width: 480px) {
+            #page { grid-template-columns: 1fr; }
+        }
+        #page a {
+            height: 80px;
+            padding: 8px;
+            border: 2px solid var(--card-border);
+            border-radius: 15px;
+            text-decoration: none;
+            background: var(--card-bg);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            cursor: pointer;
+        }
+        #page a:hover {
+            background: var(--hover-bg);
+            transform: translateY(-5px);
+        }
+        #page a img {
+            height: 60px;
+            width: 60px;
+            border-radius: 12px;
+            margin-left: 15px;
+            border: 2px solid var(--primary-color);
+            object-fit: cover;
+        }
+        #page a p {
+            text-align: right;
+            font-weight: 600;
+            color: #FFF;
+            margin: 0;
+            flex-grow: 1;
+            font-size: 18px;
+        }
+        .live-badge {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: linear-gradient(135deg, #3B82F6, #FFD700);
+            color: #1E3A8A;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .sections-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .category-wrapper { margin-bottom: 40px; position: relative; }
+        .loader { text-align: center; padding: 60px; font-size: 24px; color: #FFD700; }
+        .no-results { text-align: center; padding: 30px; background: var(--card-bg); border-radius: 15px; border: 2px solid var(--primary-color); }
+        footer { text-align: center; padding: 25px; color: #aaa; border-top: 1px solid #2d3a5e; margin-top: 20px; }
+        @media (max-width: 480px) {
+            #page a p { font-size: 16px; }
+            #page a img { height: 50px; width: 50px; }
+            #page a { height: 70px; }
+        }
+    </style>
+</head>
+<body>
+<div class="sections-container" id="sectionsContainer">
+    <div class="loader"><i class="fa fa-spinner fa-spin"></i> جاري تحميل قنوات BABTV...</div>
+</div>
+<footer>VIP IPTV | جميع القنوات مرتبة حسب الأقسام</footer>
+
+<script>
+    // رابط الـ M3U المأخوذ من ملفك على GitHub
+    const M3U_URL = 'http://kanwat1.xyz:8080/get.php?username=lion123123&password=747645&type=m3u_plus&output=mpegts';
+    
+    async function fetchM3UChannels() {
+        try {
+            const response = await fetch(M3U_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const m3uText = await response.text();
+            return parseM3U(m3uText);
+        } catch (error) {
+            console.error(error);
+            throw new Error("فشل تحميل قائمة القنوات. تأكد من صحة الرابط.");
+        }
+    }
+
+    function parseM3U(m3uData) {
+        const lines = m3uData.split(/\r?\n/);
+        const channels = [];
+        let currentChannel = null;
+        
+        for (let line of lines) {
+            line = line.trim();
+            if (line.startsWith('#EXTINF:')) {
+                // استخراج معلومات القناة
+                const match = line.match(/#EXTINF:(-?\d+)(?:\s+(.*?))?,\s*(.*)/);
+                if (match) {
+                    const duration = match[1];
+                    const attributes = match[2] || '';
+                    let name = match[3] || 'قناة بدون اسم';
+                    
+                    // استخراج tvg-name, tvg-logo, group-title
+                    let logo = '';
+                    let category = 'عام';
+                    let tvgName = '';
+                    
+                    const groupMatch = attributes.match(/group-title="([^"]*)"/);
+                    if (groupMatch) category = groupMatch[1];
+                    
+                    const logoMatch = attributes.match(/tvg-logo="([^"]*)"/);
+                    if (logoMatch && logoMatch[1]) logo = logoMatch[1];
+                    
+                    const nameMatch = attributes.match(/tvg-name="([^"]*)"/);
+                    if (nameMatch) tvgName = nameMatch[1];
+                    
+                    // تنظيف الاسم
+                    if (tvgName) name = tvgName;
+                    name = name.replace(/\([^)]*\)/g, '').trim();
+                    if (!name) name = 'قناة';
+                    
+                    currentChannel = {
+                        name: name,
+                        category: category,
+                        logo: logo,
+                        stream_url: '',
+                        badge: getBadgeFromName(name)
+                    };
+                }
+            } else if (line && !line.startsWith('#') && currentChannel) {
+                // هذا هو رابط البث
+                currentChannel.stream_url = line;
+                if (currentChannel.name && currentChannel.stream_url) {
+                    channels.push(currentChannel);
+                }
+                currentChannel = null;
+            }
+        }
+        
+        // تجميع حسب الفئات
+        const categoriesMap = new Map();
+        for (const ch of channels) {
+            let catName = ch.category || 'قنوات عامة';
+            if (!categoriesMap.has(catName)) categoriesMap.set(catName, []);
+            categoriesMap.get(catName).push(ch);
+        }
+        
+        // ترتيب الفئات والأسماء
+        const sorted = new Map([...categoriesMap.entries()].sort());
+        for (let [name, list] of sorted.entries()) {
+            list.sort((a,b) => a.name.localeCompare(b.name));
+        }
+        return sorted;
+    }
+    
+    function getBadgeFromName(name) {
+        const n = name.toLowerCase();
+        if (n.includes('4k')) return '4K';
+        if (n.includes('hd')) return 'HD';
+        if (n.includes('sd')) return 'SD';
+        return 'مباشر';
+    }
+    
+    function renderCategories(categoriesMap) {
+        const container = document.getElementById('sectionsContainer');
+        container.innerHTML = '';
+        
+        if (categoriesMap.size === 0) {
+            container.innerHTML = '<div class="no-results">⚠️ لا توجد قنوات متاحة في القائمة</div>';
+            return;
+        }
+        
+        for (let [categoryName, channelsList] of categoriesMap.entries()) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'category-wrapper';
+            
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `
+                <h2>
+                    <i class="fa fa-folder-open-o"></i> 
+                    ${escapeHtml(categoryName)}
+                    <span class="count">${channelsList.length}</span>
+                </h2>
+            `;
+            
+            const grid = document.createElement('div');
+            grid.id = 'page';
+            
+            channelsList.forEach(ch => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'channel-card';
+                link.setAttribute('data-url', ch.stream_url);
+                const imgSrc = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://up6.cc/2026/03/177443011446581.png';
+                link.innerHTML = `
+                    <div class="live-badge">${ch.badge}</div>
+                    <img src="${imgSrc}" onerror="this.src='https://up6.cc/2026/03/177443011446581.png'">
+                    <p>${escapeHtml(ch.name)}</p>
+                `;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (ch.stream_url) window.open(ch.stream_url, '_blank');
+                    else alert("رابط البث غير متوفر");
+                });
+                grid.appendChild(link);
+            });
+            
+            wrapper.appendChild(header);
+            wrapper.appendChild(grid);
+            container.appendChild(wrapper);
+        }
+    }
+    
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    
+    async function init() {
+        try {
+            const categories = await fetchM3UChannels();
+            renderCategories(categories);
+        } catch (err) {
+            document.getElementById('sectionsContainer').innerHTML = `
+                <div class="no-results" style="border-color:#ff4444;">
+                    <i class="fa fa-exclamation-triangle"></i> ${err.message}<br>
+                    <button onclick="location.reload()" style="margin-top:15px;padding:8px 20px;background:#FFD700;border-radius:30px;cursor:pointer;">إعادة المحاولة</button>
+                </div>`;
+        }
+    }
+    init();
+</script>
+</body>
+</html>
